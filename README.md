@@ -10,3 +10,5 @@
 
 4. lfdra-vs-b contains a plot showing the marginal lfdrs for a and b for pi = c(0.7, 0.1, 0.1, 0.1), mu = 1, theta = -1, var1 = 1, var2 = 3. 
 Clearly, for this setup, the margina lfdrs are unable to provide a distinction between the nulls and the non nulls.
+
+5. lfdra-vs-b-setup2 contains the plot showing the marginal lfdrs for a and b for pi = (0.7,0.1, 0.1, 0.1) and mu = 3, theta = -3, var1 = 1, var2 = 2. This probably indicates that lfdr will be able to distinguish between the null and the alternative more effectively if the means of the non-null cases are far away from zero. 
