@@ -1,5 +1,5 @@
 ##Implementation of 1d rejection region with a joint local fdr
-
+source("~/Documents/OneDrive - Texas A&M University/Documents/fair-ML/RCodes/mediation_git/EM2v2.R")
 ##Generate data:
 J = 1000
 mu = 1
