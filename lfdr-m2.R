@@ -60,7 +60,7 @@ lfdr = function(samp, parm)
   return(list(cutoff = lfdrk, rej = reject, k = k))
 }
 
-obj = lfdr(samp, parm = c(pi, mu, theta, var1, var2))
+obj = lfdr(samp, parm = parm)
 reject = obj$rej
 pow = sum(reject*tp)/sum(tp)
 mfdr = sum(tn*reject)/sum(reject)
