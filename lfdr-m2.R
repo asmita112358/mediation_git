@@ -1,0 +1,66 @@
+##Implementation of 1d rejection region with a joint local fdr
+
+##Generate data:
+J = 1000
+mu = 1
+theta = -1
+pi = c(0.7, 0.1, 0.1, 0.1)
+var1 = 1
+var2 = 3
+
+obj = generate(J, pi, var1, var2, mu, theta)
+samp = obj$sample
+gamma = obj$gamma
+tp = (gamma == 4)
+tn = (gamma != 4)
+##Running EM algorithm to estimate the parameters
+pi.init = c(0.6, 0.2, 0.1, 0.1)
+parm = maximization(samp, pi.init)$par
+
+##computing the joint local fdr
+
+##samp is a JX2 matrix with the first col as a, second col b
+##parm = the parameter in the order it's returned from the maximization function, barring the pi's.
+
+##Check this every time, or come up with a method to check which is closest
+par = c(parm[1], parm[3], parm[4], parm[2], parm[5:8])
+parm = par
+lfdr = function(samp, parm)
+{
+ # J = nrow(samp)
+#  a = samp[,1]
+#  b = samp[,2]
+ # p00 = parm[1]
+ # p10 = parm[2]
+ # p01 = parm[3]
+ # p11 = parm[4]
+ # mu = parm[5]
+ # theta = parm[6]
+  #var1 = parm[7]
+  #var2 = parm[8]
+  lfdr = vector()
+  for(i in 1:J)
+  {
+    t1 = pi[1]*dnorm(a[i],0,sqrt(var1))*dnorm(b[i],0,sqrt(var2)) + 
+      pi[2]*dnorm(a[i], mu,sqrt(var1 + 1))*dnorm(b[i],0,sqrt(var2)) + 
+      pi[3]*dnorm(a[i],0,sqrt(var1))*dnorm(b[i],theta,sqrt(var2 + 1))
+    t2 = pi[4]*dnorm(a[i], mu,sqrt(var1 + 1))*dnorm(b[i],theta,sqrt(var2 + 1))
+    lfdr[i] = t1/(t1 + t2)
+    #rm(list = c(t1,t2))
+  }
+  st.lfdr<-sort(lfdr)
+  k=1
+  q = 0.2
+  while(k<J && ((1/k)*sum(st.lfdr[1:k])) <= q){
+    k=k+1
+  }
+  k<-k-1
+  lfdrk<-st.lfdr[k]
+  reject<- lfdr<=lfdrk
+  accept<- lfdr>lfdrk
+}
+
+pow = sum(reject*tp)/sum(tp)
+mfdr = sum(tn*reject)/sum(reject)
+
+
