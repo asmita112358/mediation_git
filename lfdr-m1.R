@@ -3,11 +3,11 @@ source("~/Documents/OneDrive - Texas A&M University/Documents/fair-ML/RCodes/med
 library(ggplot2)
 ##Generate data:
 J = 1000
-mu = 1
-theta = -1
+mu = 5
+theta = -5
 pi = c(0.7, 0.1, 0.1, 0.1)
 var1 = 1
-var2 = 3
+var2 = 2
 
 obj = generate(J, pi, var1, var2, mu, theta)
 samp = obj$sample
@@ -17,7 +17,7 @@ tn = (gamma != 4)
 
 
 ##EM algorithm to estimate the parameters.
-##Will write an EM algorithm to estimate the parameters later on, 
+##Will use EM algorithm to estimate the parameters later on, 
 #for now, using the actual parameter values to compute the oracle rule.
 
 
@@ -48,6 +48,8 @@ lfdr = function(samp, parm)
 obj = lfdr(samp, parm = c(pi, mu, theta, var1, var2))
 lfdra = obj[[1]]
 lfdrb = obj[[2]]
+
+
 ##Making a ggplot
 hyp = if_else(tp, "non_null", "null")
 data = data.frame(lfdra, lfdrb, hyp)
