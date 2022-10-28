@@ -82,7 +82,7 @@ Q = function(i,j, lfdra, lfdrb, parm)
   t2 = pi[3]/((pi[1] + pi[3])*(pi[3] + pi[4]))*Am*Bm.til
   t3 = pi[2]/((pi[1] + pi[2])*(pi[2] + pi[4]))*Am.til*Bm
   t4 = pi[4]/((pi[2] + pi[4])*(pi[3] + pi[4]))*Am.hat*Bm.hat
-  den = max(1/J,mean((lfdra < st.lfdra[i])*(lfdrb < st.lfdrb[j])))
+  den = max(1,sum((lfdra < st.lfdra[i])*(lfdrb < st.lfdrb[j])))
   
   
   return(list(mfdr = (t1 + t2 + t3)/den, mfnr= t4/den))
@@ -113,9 +113,19 @@ if(sum(G) == 0) {
   rej = rep(0,J)
   print("Higher cutoff necessary")
 }else{
-  temp = Qmfnr*G
+  temp = (max(Qmfnr) -Qmfnr)*G
   ###Fix this tomorrow. You're looking for the minimum value among the 
-  ###non zero values of temp.
-  cutoffs = which(temp == min(), arr.ind = TRUE)
+  ###non zero values of temp. Simple, find a monotone decreasing transform of the mfdr
+  cutoffs = which(temp == max(temp), arr.ind = TRUE)[1,]
+  lambda = sort(lfdra)[cutoffs[1]]
+  psi = sort(lfdrb)[cutoffs[2]]
+  reject = (lfdra<=lambda)*(lfdrb <=psi)
 }
-  }
+}
+
+reject_new = (lfdra<= 0.75)*(lfdrb <= 0.54)
+sum(reject_new)
+mfdr = sum(tn*reject_new)/sum(reject_new)
+pow = sum(reject_new*tp)/sum(tp)
+mfdr
+pow
