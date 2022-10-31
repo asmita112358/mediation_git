@@ -89,26 +89,27 @@ sim.fcn = function(J, pi, var1, var2, mu, theta, pi.init = c(0.8, 0.05, 0.05, 0.
 ##Dense null:
 ##Generate data:
 J = 1000
-mu = 2
-theta = 2
+mu = 5
+theta = 5
 pi = c(0.7, 0.1, 0.1, 0.1)
 var1 = 0.5
 var2 = 0.7
 
-m = matrix(nrow = 20, ncol = 2)
-for(r in 1:20)
+m = matrix(nrow = 100, ncol = 2)
+for(r in 1:100)
 {
  m[r,] = sim.fcn(J, pi, var1, var2, mu, theta, pi.init = c(0.8, 0.05, 0.05, 0.1))
- print(u) 
+ print(r) 
 }
 
 u = colMeans(m)
-v = apply(m,1, var)
+v = apply(m,2, var)
+v = sqrt(v)
 
 ##Dense alternative
 J = 1000
-mu = 2
-theta = 2
+mu = 5
+theta = 5
 pi = c(0.3, 0.2, 0.2, 0.3)
 var1 = 0.5
 var2 = 0.7
@@ -122,4 +123,4 @@ for(r in 1:20)
 }
 
 u = colMeans(m)
-v = apply(m,1, var)
+v = apply(m,2, var)

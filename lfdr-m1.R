@@ -4,8 +4,8 @@ library(ggplot2)
 ##Generate data:
 size = 0.05
 J = 1000
-mu = 5
-theta = -5
+mu = 2
+theta = 2
 pi = c(0.7, 0.1, 0.1, 0.1)
 var1 = 1
 var2 = 2
@@ -21,9 +21,18 @@ tn = (gamma != 4)
 pi.init = c(0.8, 0.05, 0.05, 0.1)
 parm = maximization(samp, pi.init)$par
 
-##Will use EM algorithm to estimate the parameters later on, 
-#for now, using the actual parameter values to compute the oracle rule.
+##Checking which rearrangement of pi suits
 
+pi_est = parm[1:4]
+
+err = vector()
+object = permn(pi_est)
+for(i in 1:24)
+{
+  err[i] = sum(abs((object[[i]]-pi)))
+}
+pi_new = object[[which.min(err)]]
+parm = c(pi_new, parm[5:8])
 
 lfdr2 = function(samp, parm)
 {
@@ -85,13 +94,13 @@ Q = function(i,j, lfdra, lfdrb, parm)
   den = max(1,sum((lfdra < st.lfdra[i])*(lfdrb < st.lfdrb[j])))
   
   
-  return(list(mfdr = (t1 + t2 + t3)/den, mfnr= t4/den))
+  return(list(mfdr = (1/J)*(t1 + t2 + t3)/den, mfnr= (1/J)*t4/den))
 }
 
 
 
 #Finding cutoffs
-cutoff = function(lfdra, lfdrb, q)
+cutoff = function(lfdra, lfdrb, size = 0.05)
 {
   Qmfdr = matrix(nrow = J, ncol = J)
   Qmfnr = matrix(nrow = J, ncol = J)
@@ -120,12 +129,15 @@ if(sum(G) == 0) {
   lambda = sort(lfdra)[cutoffs[1]]
   psi = sort(lfdrb)[cutoffs[2]]
   reject = (lfdra<=lambda)*(lfdrb <=psi)
+  return(list(reject = reject, lambda = lambda, psi = psi))
 }
 }
 
-reject_new = (lfdra<= 0.75)*(lfdrb <= 0.54)
-sum(reject_new)
-mfdr = sum(tn*reject_new)/sum(reject_new)
-pow = sum(reject_new*tp)/sum(tp)
+
+obj2 = cutoff(lfdra, lfdrb)
+reject = obj2$reject
+sum(reject)
+mfdr = sum(tn*reject)/sum(reject)
+pow = sum(reject*tp)/sum(tp)
 mfdr
 pow
