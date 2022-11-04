@@ -66,7 +66,12 @@ est.coeff = function(X, Y, M) ##Takes in the original sample, returns alpha and 
   return(cbind(alpha, beta))
 }
 
-
+Var_fun = function(sigma_a, sigma_b, X, Y, M)
+{
+  ##...computations go here...
+  
+  return(cbind(var1, var2))  ##Where var1 and var2 are each vectors of length m
+}
 ##Functions for EM algorithm.
 ##Computing E(gamma|everythingelse)
 
