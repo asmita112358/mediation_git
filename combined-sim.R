@@ -2,46 +2,7 @@
 source("~/Documents/OneDrive - Texas A&M University/Documents/fair-ML/RCodes/mediation_git/dact.R")
 source("~/Documents/OneDrive - Texas A&M University/Documents/fair-ML/RCodes/mediation_git/EM2v2.R")
 
-##Function for generating from the original model
-generate = function(m, n, pi, tau, X)
-{
-  if(length(X) != n)stop(print("Length of X and n is not same"))
-  M = matrix(nrow = m, ncol = n)
-  Y = matrix(nrow = m, ncol = n)
-  gamma = sample(1:4, m, replace = T, prob = pi)
-  
-  alpha = vector()
-  beta = vector()
-  tn = vector()
-  tp = vector()
-  for(i in 1:m)
-  {
-    if(gamma[i] == 1){  ##h00
-      alpha[i] = 0
-      beta[i] = 0
-      
-    }else if(gamma[i] ==3){  ##h01
-      alpha[i] = 0
-      beta[i] = 0.3*tau
-      
-    }else if(gamma[i] ==2){  ##h10
-      alpha[i] = 0.2*tau
-      beta[i] = 0
-      
-    }else{    ##h11
-      alpha[i] = 0.2*tau
-      beta[i] = 0.3*tau
-    }
-    tn[i] = alpha[i]*beta[i] ==0
-    tp[i] = alpha[i]*beta[i] !=0
-    M[i,] = alpha[i]*X + rnorm(n)
-    Y[i,] = beta[i]*M[i,] + rnorm(n)
-    
-  }
-  return(list(M = M, Y = Y, X = X, tp = tp, tn = tn))
-  
-  
-}
+
 
 n = 100
 m = 1000
