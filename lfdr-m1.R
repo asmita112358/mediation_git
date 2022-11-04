@@ -136,6 +136,8 @@ if(sum(G) == 0) {
 
 obj2 = cutoff(lfdra, lfdrb)
 reject = obj2$reject
+reject_new = (lfdra <= 0.35)*(lfdra <= 0.28) 
+reject = reject_new
 sum(reject)
 mfdr = sum(tn*reject)/sum(reject)
 pow = sum(reject*tp)/sum(tp)
