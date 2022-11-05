@@ -66,25 +66,41 @@ est.coeff = function(X, Y, M) ##Takes in the original sample, returns alpha and 
   return(cbind(alpha, beta))
 }
 
-Var_fun = function(sigma_a, sigma_b, X, Y, M)
+var_fun = function(sigma_a, sigma_b, X, M)
 {
   ##...computations go here...
+  m = nrow(M)
+  var1 = sigma_a^2/mean(X^2)
+  t1 = sigma_b^2*mean(X^2)
+  var2 = vector()
+  for(i in 1:m)
+  {
+    t2 = mean(X^2)*mean(M[i,]^2) - (mean(X*M[i,]))^2
+    var2[i] = t1/t2
+  }
   
-  return(cbind(var1, var2))  ##Where var1 and var2 are each vectors of length m
+  
+  return(c(var1, var2))  ##Where var1= scalar and var2=vector of length m 
 }
 ##Functions for EM algorithm.
 ##Computing E(gamma|everythingelse)
 
-Q = function(sample, pi, sigma_a, sigma_b, mu, theta)
+Q = function(alpha, beta,X, M, pi, sigma_a, sigma_b, mu, theta)
 {
-  t = matrix(nrow = J, ncol = 4)
+  m = nrow(M)
+  t = matrix(nrow = m, ncol = 4)
   ##Insert code here for computing sigma1_i and sigma_2i from sigma_a and sigma_b
+  variances = var_fun(sigma_a, sigma_b, X, M)
+  var1 = variances[1]
+  var2 = variances[-1]
+  for(i in 1:m)
+  {
+    t[i,1] = pi[1]*dmvnorm(c(alpha[i], beta[i]), c(0,0), matrix(c(var1,0,0,var2[i]), nrow = 2))
+    t[i,2] = pi[2]*dmvnorm(c(alpha[i], beta[i]), c(mu,0), matrix(c(var1 + 1,0,0,var2[i]), nrow = 2))
+    t[i,3] = pi[3]*dmvnorm(c(alpha[i], beta[i]), c(0,theta), matrix(c(var1,0,0,var2[i] + 1), nrow = 2))
+    t[i,4] = pi[4]*dmvnorm(c(alpha[i], beta[i]), c(mu,theta), matrix(c(var1 + 1,0,0,var2[i] + 1), nrow = 2))
+    
+  }
   
-  
-  t[,1] = pi[1]*dmvnorm(sample, c(0,0), matrix(c(var1,0,0,var2), nrow = 2))
-  t[,2] = pi[2]*dmvnorm(sample, c(mu,0), matrix(c(var1 + 1,0,0,var2), nrow = 2))
-  t[,3] = pi[3]*dmvnorm(sample, c(0,theta), matrix(c(var1,0,0,var2 + 1), nrow = 2))
-  t[,4] = pi[4]*dmvnorm(sample, c(mu,theta), matrix(c(var1 + 1,0,0,var2 + 1), nrow = 2))
-  
-  return(t/rowSums(t))
+  return(t/rowSums(t))  ##Check this
 }
