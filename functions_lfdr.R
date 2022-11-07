@@ -71,12 +71,16 @@ var_fun = function(sigma_a, sigma_b, X, M)
   ##...computations go here...
   m = nrow(M)
   var1 = sigma_a^2/mean(X^2)
-  t1 = sigma_b^2*mean(X^2)
+ # X = matrix(X, nrow = n)
+  P = diag(n) - X%*%t(X)/sum(X^2)
   var2 = vector()
   for(i in 1:m)
   {
-    t2 = mean(X^2)*mean(M[i,]^2) - (mean(X*M[i,]))^2
-    var2[i] = t1/t2
+    #t2 = mean(X^2)*mean(M[i,]^2) - (mean(X*M[i,]))^2
+    #var2[i] = t1/t2
+    
+    #mean(X^2/(X^2*M[i,]^2 - (X*M[i,])^2))
+    var2[i] = sigma_b^2*1/(t(M[i,])%*%P%*%M[i,])
   }
   
   
@@ -153,7 +157,7 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
   
   mu_start = mean(alpha)
   theta_start = mean(beta)
-  sigma_a_start = sqrt(var(alpha)*mean(X^2))
+  sigma_a_start = 1 #sqrt(var(alpha)*mean(X^2))
   sigma_b_start = 1
   Qval = Q(alpha, beta, X, M, pi_start, sigma_a_start, sigma_b_start, mu_start, theta_start)
   LL.start = LL.data(sigma_a_start, sigma_b_start, alpha, beta, X, M, pi_start, mu_start, theta_start)
@@ -180,7 +184,7 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
   counter = 1
   LL.vec = vector()
   LL.vec[counter] = LL.new
-  while(abs(LL.new - LL.start) > 1e-6)
+  while(abs(LL.new - LL.start) > 1e-3)
   {
     counter = counter + 1
     ##The new values from the last iteration becomes the starting values
@@ -208,11 +212,11 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
     sigma_b_new = optimize(LL.complete, interval = c(0,10) , sigma_a = 1,alpha = alpha, beta = beta,
                            X = X, M = M, Qval = Qval, pi = pi_new, mu = mu_new, theta = theta_new, maximum = TRUE)$maximum
     
-    
+    print(c(sigma_a_new, sigma_b_new))
     ##Increase counter and check the likelihood
     
     LL.new = LL.data(sigma_a_new, sigma_b_new, alpha, beta, X, M, pi_new, mu_new, theta_new)
-    print(counter)
+    #print(counter)
     
     ##If the while loop runs longer than maxiter then it's stopped forcibly.
     #if(counter > maxiter) {print(paste("LL=", LL.new));LL.new = LL.start}
