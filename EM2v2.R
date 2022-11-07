@@ -42,7 +42,6 @@ Q = function(sample, pi, var1, var2, mu, theta)
   t[,2] = pi[2]*dmvnorm(sample, c(mu,0), matrix(c(var1 + 1,0,0,var2), nrow = 2))
   t[,3] = pi[3]*dmvnorm(sample, c(0,theta), matrix(c(var1,0,0,var2 + 1), nrow = 2))
   t[,4] = pi[4]*dmvnorm(sample, c(mu,theta), matrix(c(var1 + 1,0,0,var2 + 1), nrow = 2))
-  
   return(t/rowSums(t))
 }
 

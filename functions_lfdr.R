@@ -7,7 +7,7 @@ library(rootSolve)
 library(dplyr)
 require(EnvStats)
 library(stats)
-
+rm(list = ls())
 ##Function for generating from the original model
 generate = function(m, n, pi, tau, X)
 {
@@ -44,7 +44,7 @@ generate = function(m, n, pi, tau, X)
     Y[i,] = beta[i]*M[i,] + rnorm(n)
     
   }
-  return(list(M = M, Y = Y, X = X, tp = tp, tn = tn))
+  return(list(M = M, Y = Y, X = X, sample = cbind(alpha, beta),tp = tp, tn = tn))
   
   
 }
@@ -154,14 +154,20 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
   mu_start = mean(alpha)
   theta_start = mean(beta)
   sigma_a_start = sqrt(var(alpha)*mean(X^2))
-  sigma_b_start = sqrt(var(beta)/mean(X^2))
+  sigma_b_start = 1
   Qval = Q(alpha, beta, X, M, pi_start, sigma_a_start, sigma_b_start, mu_start, theta_start)
   LL.start = LL.data(sigma_a_start, sigma_b_start, alpha, beta, X, M, pi_start, mu_start, theta_start)
+  
+  ##Computing variances
+  variances = var_fun(sigma_a_start, sigma_b_start, X, M)
+  var1 = variances[1]
+  var2 = variances[-1]
   
   ##EM update
   pi_new = colMeans(Qval)
   mu_new = sum(Qval[,2]*alpha + Qval[,4]*alpha)/sum(Qval[,2] + Qval[,4])
-  theta_new = sum(Qval[,3]*beta + Qval[,4]*beta)/sum(Qval[,3] + Qval[,4])
+  v = (Qval[,3] + Qval[,4])/(var2 + 1)
+  theta_new = sum(v*beta)/sum(v)
   sigma_a_new = optimize(LL.complete, interval = c(0,10) , sigma_b = 1,alpha = alpha, beta = beta,
                          X = X, M = M, Qval = Qval, pi = pi_new, mu = mu_new, theta = theta_new, maximum = TRUE)$maximum
   sigma_b_new = optimize(LL.complete, interval = c(0,10) , sigma_a = 1,alpha = alpha, beta = beta,
@@ -174,24 +180,29 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
   counter = 1
   LL.vec = vector()
   LL.vec[counter] = LL.new
-  while(LL.new - LL.start > 1e-6)
+  while(abs(LL.new - LL.start) > 1e-6)
   {
     counter = counter + 1
     ##The new values from the last iteration becomes the starting values
     LL.start = LL.new
     LL.vec[counter] = LL.new
+    print(LL.new)
     pi_start = pi_new
     mu_start = mu_new
     theta_start = theta_new
-    var1_start = var1_new
-    var2_start = var2_new
+    sigma_a_start = sigma_a_new
+    sigma_b_start = sigma_b_new
     Qval = Q(alpha, beta, X, M, pi_start, sigma_a_start, sigma_b_start, mu_start, theta_start)
     
-    
+    ##Computing variances
+    variances = var_fun(sigma_a_start, sigma_b_start, X, M)
+    var1 = variances[1]
+    var2 = variances[-1]
     ##EM Update
     pi_new = colMeans(Qval)
     mu_new = sum(Qval[,2]*alpha + Qval[,4]*alpha)/sum(Qval[,2] + Qval[,4])
-    theta_new = sum(Qval[,3]*beta + Qval[,4]*beta)/sum(Qval[,3] + Qval[,4])
+    v = (Qval[,3] + Qval[,4])/(var2 + 1)
+    theta_new = sum(v*beta)/sum(v)
     sigma_a_new = optimize(LL.complete, interval = c(0,10) , sigma_b = 1,alpha = alpha, beta = beta,
                            X = X, M = M, Qval = Qval, pi = pi_new, mu = mu_new, theta = theta_new, maximum = TRUE)$maximum
     sigma_b_new = optimize(LL.complete, interval = c(0,10) , sigma_a = 1,alpha = alpha, beta = beta,
@@ -201,11 +212,18 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
     ##Increase counter and check the likelihood
     
     LL.new = LL.data(sigma_a_new, sigma_b_new, alpha, beta, X, M, pi_new, mu_new, theta_new)
-    #print(counter)
+    print(counter)
     
     ##If the while loop runs longer than maxiter then it's stopped forcibly.
-    if(counter > maxiter) {print(paste("LL=", LL.new));LL.new = LL.start}
+    #if(counter > maxiter) {print(paste("LL=", LL.new));LL.new = LL.start}
   }
-  return(list(likelihood = LL.vec, par = c(pi_new, mu_new, theta_new, var1_new, var2_new))) 
+  return(list(likelihood = LL.vec, par = c(pi_new, mu_new, theta_new, sigma_a_new, sigma_b_new))) 
   
-}  
+} 
+
+
+
+for(i in 1:length(sigval))
+{
+  y_temp[i] = LL.complete(sigval[i],sigma_b = 1,alpha = alpha, beta = beta, X = X, M = M, Qval = Qval, pi = pi_new, mu = mu_new, theta = theta_new)
+}

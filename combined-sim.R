@@ -43,5 +43,9 @@ comb.fcn = function(X, M, Y, tp, tn, size)
   pow2 = sum(rej2*tp)/sum(tp)
   
   
+  sample2 = est.coeff(X, Y, M)
+  alpha = sample2[,1]
+  beta = sample2[,2]
+  
   
 }
