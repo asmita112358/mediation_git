@@ -70,7 +70,7 @@ var_fun = function(sigma_a, sigma_b, X, M)
 {
   ##...computations go here...
   m = nrow(M)
-  var1 = sigma_a^2/mean(X^2)
+  var1 = sigma_a^2/sum(X^2)
  # X = matrix(X, nrow = n)
   P = diag(n) - X%*%t(X)/sum(X^2)
   var2 = vector()
@@ -80,7 +80,7 @@ var_fun = function(sigma_a, sigma_b, X, M)
     #var2[i] = t1/t2
     
     #mean(X^2/(X^2*M[i,]^2 - (X*M[i,])^2))
-    var2[i] = sigma_b^2*1/(t(M[i,])%*%P%*%M[i,])
+    var2[i] = sigma_b^2/(t(M[i,])%*%P%*%M[i,])
   }
   
   
@@ -115,9 +115,19 @@ LL.complete = function(sigma_a, sigma_b, alpha, beta, X, M, Qval, pi, mu, theta)
   m = nrow(M)
   t = matrix(nrow = m, ncol = 4)
   ##Insert code here for computing sigma1_i and sigma_2i from sigma_a and sigma_b
-  variances = var_fun(sigma_a, sigma_b, X, M)
-  var1 = variances[1]
-  var2 = variances[-1]
+  var1 = sigma_a^2/sum(X^2)
+  # X = matrix(X, nrow = n)
+  P = diag(n) - X%*%t(X)/sum(X^2)
+  var2 = vector()
+  for(i in 1:m)
+  {
+    #t2 = mean(X^2)*mean(M[i,]^2) - (mean(X*M[i,]))^2
+    #var2[i] = t1/t2
+    
+    #mean(X^2/(X^2*M[i,]^2 - (X*M[i,])^2))
+    var2[i] = sigma_b^2/(t(M[i,])%*%P%*%M[i,])
+  }
+  
   for(i in 1:m)
   {
     t[i,1] = pi[1]*dmvnorm(c(alpha[i], beta[i]), c(0,0), matrix(c(var1,0,0,var2[i]), nrow = 2))
@@ -155,10 +165,10 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
   
   ##Define starting values of parameters
   
-  mu_start = mean(alpha)
-  theta_start = mean(beta)
-  sigma_a_start = 1 #sqrt(var(alpha)*mean(X^2))
-  sigma_b_start = 1
+  mu_start = mean(tail(sort(alpha),m/10))
+  theta_start = mean(tail(sort(beta),m/10))
+  sigma_a_start = 1.5 #sqrt(var(alpha)*sum(X^2))
+  sigma_b_start = 2
   Qval = Q(alpha, beta, X, M, pi_start, sigma_a_start, sigma_b_start, mu_start, theta_start)
   LL.start = LL.data(sigma_a_start, sigma_b_start, alpha, beta, X, M, pi_start, mu_start, theta_start)
   
@@ -172,9 +182,9 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
   mu_new = sum(Qval[,2]*alpha + Qval[,4]*alpha)/sum(Qval[,2] + Qval[,4])
   v = (Qval[,3] + Qval[,4])/(var2 + 1)
   theta_new = sum(v*beta)/sum(v)
-  sigma_a_new = optimize(LL.complete, interval = c(0,10) , sigma_b = 1,alpha = alpha, beta = beta,
+  sigma_a_new = optimize(LL.complete, interval = c(0.001,10) , sigma_b = 1,alpha = alpha, beta = beta,
                          X = X, M = M, Qval = Qval, pi = pi_new, mu = mu_new, theta = theta_new, maximum = TRUE)$maximum
-  sigma_b_new = optimize(LL.complete, interval = c(0,10) , sigma_a = 1,alpha = alpha, beta = beta,
+  sigma_b_new = optimize(LL.complete, interval = c(0.001,10) , sigma_a = 1,alpha = alpha, beta = beta,
                          X = X, M = M, Qval = Qval, pi = pi_new, mu = mu_new, theta = theta_new, maximum = TRUE)$maximum
   
   ##Computing the value of log-likelihood with the EM updates
@@ -207,9 +217,9 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
     mu_new = sum(Qval[,2]*alpha + Qval[,4]*alpha)/sum(Qval[,2] + Qval[,4])
     v = (Qval[,3] + Qval[,4])/(var2 + 1)
     theta_new = sum(v*beta)/sum(v)
-    sigma_a_new = optimize(LL.complete, interval = c(0,10) , sigma_b = 1,alpha = alpha, beta = beta,
+    sigma_a_new = optimize(LL.complete, interval = c(0.001,10) , sigma_b = 1,alpha = alpha, beta = beta,
                            X = X, M = M, Qval = Qval, pi = pi_new, mu = mu_new, theta = theta_new, maximum = TRUE)$maximum
-    sigma_b_new = optimize(LL.complete, interval = c(0,10) , sigma_a = 1,alpha = alpha, beta = beta,
+    sigma_b_new = optimize(LL.complete, interval = c(0.001,10) , sigma_a = 1,alpha = alpha, beta = beta,
                            X = X, M = M, Qval = Qval, pi = pi_new, mu = mu_new, theta = theta_new, maximum = TRUE)$maximum
     
     print(c(sigma_a_new, sigma_b_new))
@@ -227,7 +237,42 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
 
 
 
-for(i in 1:length(sigval))
+##Function for computing cutoffs
+lfdr = function(samp, parm)
 {
-  y_temp[i] = LL.complete(sigval[i],sigma_b = 1,alpha = alpha, beta = beta, X = X, M = M, Qval = Qval, pi = pi_new, mu = mu_new, theta = theta_new)
+  J = nrow(samp)
+  a = samp[,1]
+  b = samp[,2]
+  pi = parm[1:4]
+  mu = parm[5]
+  theta = parm[6]
+  var1 = parm[7]
+  var2 = parm[8]
+  a = samp[,1]
+  b = samp[,2]
+  
+  lfdr = vector()
+  for(i in 1:J)
+  {
+    t1 = pi[1]*dnorm(a[i],0,sqrt(var1))*dnorm(b[i],0,sqrt(var2)) + 
+      pi[2]*dnorm(a[i], mu,sqrt(var1 + 1))*dnorm(b[i],0,sqrt(var2)) + 
+      pi[3]*dnorm(a[i],0,sqrt(var1))*dnorm(b[i],theta,sqrt(var2 + 1))
+    t2 = pi[4]*dnorm(a[i], mu,sqrt(var1 + 1))*dnorm(b[i],theta,sqrt(var2 + 1))
+    lfdr[i] = t1/(t1 + t2)
+    #rm(list = c(t1,t2))
+  }
+  st.lfdr<-sort(lfdr)
+  k=1
+  q = 0.05
+  while(k<J && ((1/k)*sum(st.lfdr[1:k])) <= q){
+    k=k+1
+  }
+  k<-k-1
+  lfdrk<-st.lfdr[k]
+  reject<- lfdr<=lfdrk
+  accept<- lfdr>lfdrk
+  return(list(cutoff = lfdrk, rej = reject, k = k))
 }
+
+
+
