@@ -113,6 +113,13 @@ nonnullPropEst <- function(x,u,sigma)
   return(epsest=max(epsest))
 }
 
+JCCorrect = function(pval){
+  z = stats::qnorm(pval,lower.tail = F)
+  res= nullParaEst(z)
+  pval.JC = stats::pnorm(z,mean = res$mu,sd = res$s,lower.tail = F)
+  return(pval.JC)
+}
+
 
 DACT = function(p_a,p_b,correction=NULL){
   Z_a = stats::qnorm(p_a,lower.tail = F)

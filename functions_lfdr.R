@@ -1,4 +1,5 @@
 ##Libraries
+rm(list = ls())
 library(MASS)
 library(dplyr)
 library(emdbook)
@@ -7,7 +8,7 @@ library(rootSolve)
 library(dplyr)
 require(EnvStats)
 library(stats)
-rm(list = ls())
+
 ##Function for generating from the original model
 generate = function(m, n, pi, tau, X)
 {
@@ -20,6 +21,8 @@ generate = function(m, n, pi, tau, X)
   beta = vector()
   tn = vector()
   tp = vector()
+  #vec1 = rnorm(m, 0.2*tau, 1)
+  #vec2 = rnorm(m, 0.3*tau, 1)
   for(i in 1:m)
   {
     if(gamma[i] == 1){  ##h00
@@ -44,7 +47,7 @@ generate = function(m, n, pi, tau, X)
     Y[i,] = beta[i]*M[i,] + rnorm(n)
     
   }
-  return(list(M = M, Y = Y, X = X, sample = cbind(alpha, beta),tp = tp, tn = tn))
+  return(list(M = M, Y = Y, X = X, sample = cbind(alpha, beta) ,tp = tp, tn = tn))
   
   
 }
@@ -100,9 +103,9 @@ Q = function(alpha, beta,X, M, pi, sigma_a, sigma_b, mu, theta)
   for(i in 1:m)
   {
     t[i,1] = pi[1]*dmvnorm(c(alpha[i], beta[i]), c(0,0), matrix(c(var1,0,0,var2[i]), nrow = 2))
-    t[i,2] = pi[2]*dmvnorm(c(alpha[i], beta[i]), c(mu,0), matrix(c(var1 + 1,0,0,var2[i]), nrow = 2))
-    t[i,3] = pi[3]*dmvnorm(c(alpha[i], beta[i]), c(0,theta), matrix(c(var1,0,0,var2[i] + 1), nrow = 2))
-    t[i,4] = pi[4]*dmvnorm(c(alpha[i], beta[i]), c(mu,theta), matrix(c(var1 + 1,0,0,var2[i] + 1), nrow = 2))
+    t[i,2] = pi[2]*dmvnorm(c(alpha[i], beta[i]), c(mu,0), matrix(c(var1,0,0,var2[i]), nrow = 2))
+    t[i,3] = pi[3]*dmvnorm(c(alpha[i], beta[i]), c(0,theta), matrix(c(var1,0,0,var2[i] ), nrow = 2))
+    t[i,4] = pi[4]*dmvnorm(c(alpha[i], beta[i]), c(mu,theta), matrix(c(var1,0,0,var2[i]), nrow = 2))
     
   }
   
@@ -131,9 +134,9 @@ LL.complete = function(sigma_a, sigma_b, alpha, beta, X, M, Qval, pi, mu, theta)
   for(i in 1:m)
   {
     t[i,1] = pi[1]*dmvnorm(c(alpha[i], beta[i]), c(0,0), matrix(c(var1,0,0,var2[i]), nrow = 2))
-    t[i,2] = pi[2]*dmvnorm(c(alpha[i], beta[i]), c(mu,0), matrix(c(var1 + 1,0,0,var2[i]), nrow = 2))
-    t[i,3] = pi[3]*dmvnorm(c(alpha[i], beta[i]), c(0,theta), matrix(c(var1,0,0,var2[i] + 1), nrow = 2))
-    t[i,4] = pi[4]*dmvnorm(c(alpha[i], beta[i]), c(mu,theta), matrix(c(var1 + 1,0,0,var2[i] + 1), nrow = 2))
+    t[i,2] = pi[2]*dmvnorm(c(alpha[i], beta[i]), c(mu,0), matrix(c(var1,0,0,var2[i]), nrow = 2))
+    t[i,3] = pi[3]*dmvnorm(c(alpha[i], beta[i]), c(0,theta), matrix(c(var1,0,0,var2[i]), nrow = 2))
+    t[i,4] = pi[4]*dmvnorm(c(alpha[i], beta[i]), c(mu,theta), matrix(c(var1,0,0,var2[i]), nrow = 2))
     
   }
   return(sum(Qval*log(t)) + sum(Qval*log(pi)))
@@ -151,9 +154,9 @@ LL.data = function(sigma_a, sigma_b, alpha, beta, X, M, pi, mu, theta)
   for(i in 1:m)
   {
     t[i,1] = pi[1]*dmvnorm(c(alpha[i], beta[i]), c(0,0), matrix(c(var1,0,0,var2[i]), nrow = 2))
-    t[i,2] = pi[2]*dmvnorm(c(alpha[i], beta[i]), c(mu,0), matrix(c(var1 + 1,0,0,var2[i]), nrow = 2))
-    t[i,3] = pi[3]*dmvnorm(c(alpha[i], beta[i]), c(0,theta), matrix(c(var1,0,0,var2[i] + 1), nrow = 2))
-    t[i,4] = pi[4]*dmvnorm(c(alpha[i], beta[i]), c(mu,theta), matrix(c(var1 + 1,0,0,var2[i] + 1), nrow = 2))
+    t[i,2] = pi[2]*dmvnorm(c(alpha[i], beta[i]), c(mu,0), matrix(c(var1,0,0,var2[i]), nrow = 2))
+    t[i,3] = pi[3]*dmvnorm(c(alpha[i], beta[i]), c(0,theta), matrix(c(var1,0,0,var2[i]), nrow = 2))
+    t[i,4] = pi[4]*dmvnorm(c(alpha[i], beta[i]), c(mu,theta), matrix(c(var1,0,0,var2[i]), nrow = 2))
     
   }
   return(sum(log(rowSums(pi*t))))
@@ -180,11 +183,11 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
   ##EM update
   pi_new = colMeans(Qval)
   mu_new = sum(Qval[,2]*alpha + Qval[,4]*alpha)/sum(Qval[,2] + Qval[,4])
-  v = (Qval[,3] + Qval[,4])/(var2 + 1)
+  v = (Qval[,3] + Qval[,4])/(var2)
   theta_new = sum(v*beta)/sum(v)
-  sigma_a_new = optimize(LL.complete, interval = c(0.001,10) , sigma_b = 1,alpha = alpha, beta = beta,
+  sigma_a_new = optimize(LL.complete, interval = c(0.1,10) , sigma_b = 1,alpha = alpha, beta = beta,
                          X = X, M = M, Qval = Qval, pi = pi_new, mu = mu_new, theta = theta_new, maximum = TRUE)$maximum
-  sigma_b_new = optimize(LL.complete, interval = c(0.001,10) , sigma_a = 1,alpha = alpha, beta = beta,
+  sigma_b_new = optimize(LL.complete, interval = c(0.1,10) , sigma_a = 1,alpha = alpha, beta = beta,
                          X = X, M = M, Qval = Qval, pi = pi_new, mu = mu_new, theta = theta_new, maximum = TRUE)$maximum
   
   ##Computing the value of log-likelihood with the EM updates
@@ -194,7 +197,7 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
   counter = 1
   LL.vec = vector()
   LL.vec[counter] = LL.new
-  while(abs(LL.new - LL.start) > 1e-3)
+  while(LL.new - LL.start > 1e-3)
   {
     counter = counter + 1
     ##The new values from the last iteration becomes the starting values
@@ -215,11 +218,11 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
     ##EM Update
     pi_new = colMeans(Qval)
     mu_new = sum(Qval[,2]*alpha + Qval[,4]*alpha)/sum(Qval[,2] + Qval[,4])
-    v = (Qval[,3] + Qval[,4])/(var2 + 1)
+    v = (Qval[,3] + Qval[,4])/(var2)
     theta_new = sum(v*beta)/sum(v)
-    sigma_a_new = optimize(LL.complete, interval = c(0.001,10) , sigma_b = 1,alpha = alpha, beta = beta,
+    sigma_a_new = optimize(LL.complete, interval = c(0.1,10) , sigma_b = 1,alpha = alpha, beta = beta,
                            X = X, M = M, Qval = Qval, pi = pi_new, mu = mu_new, theta = theta_new, maximum = TRUE)$maximum
-    sigma_b_new = optimize(LL.complete, interval = c(0.001,10) , sigma_a = 1,alpha = alpha, beta = beta,
+    sigma_b_new = optimize(LL.complete, interval = c(0.1,10) , sigma_a = 1,alpha = alpha, beta = beta,
                            X = X, M = M, Qval = Qval, pi = pi_new, mu = mu_new, theta = theta_new, maximum = TRUE)$maximum
     
     print(c(sigma_a_new, sigma_b_new))
@@ -238,7 +241,7 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
 
 
 ##Function for computing cutoffs
-lfdr = function(samp, parm)
+lfdr = function(samp, parm, size = 0.05)
 {
   J = nrow(samp)
   a = samp[,1]
@@ -246,25 +249,28 @@ lfdr = function(samp, parm)
   pi = parm[1:4]
   mu = parm[5]
   theta = parm[6]
-  var1 = parm[7]
-  var2 = parm[8]
+  sigma_a = parm[7]
+  sigma_b = parm[8]
   a = samp[,1]
   b = samp[,2]
+  variances = var_fun(sigma_a, sigma_b, X, M)
+  var1 = variances[1]
+  var2 = variances[-1]
   
   lfdr = vector()
   for(i in 1:J)
   {
-    t1 = pi[1]*dnorm(a[i],0,sqrt(var1))*dnorm(b[i],0,sqrt(var2)) + 
-      pi[2]*dnorm(a[i], mu,sqrt(var1 + 1))*dnorm(b[i],0,sqrt(var2)) + 
-      pi[3]*dnorm(a[i],0,sqrt(var1))*dnorm(b[i],theta,sqrt(var2 + 1))
-    t2 = pi[4]*dnorm(a[i], mu,sqrt(var1 + 1))*dnorm(b[i],theta,sqrt(var2 + 1))
+    t1 = pi[1]*dnorm(a[i],0,sqrt(var1))*dnorm(b[i],0,sqrt(var2[i])) + 
+      pi[2]*dnorm(a[i], mu,sqrt(var1))*dnorm(b[i],0,sqrt(var2[i])) + 
+      pi[3]*dnorm(a[i],0,sqrt(var1))*dnorm(b[i],theta,sqrt(var2[i]))
+    t2 = pi[4]*dnorm(a[i], mu,sqrt(var1))*dnorm(b[i],theta,sqrt(var2[i]))
     lfdr[i] = t1/(t1 + t2)
     #rm(list = c(t1,t2))
   }
   st.lfdr<-sort(lfdr)
   k=1
-  q = 0.05
-  while(k<J && ((1/k)*sum(st.lfdr[1:k])) <= q){
+  
+  while(k<J && ((1/k)*sum(st.lfdr[1:k])) <= size){
     k=k+1
   }
   k<-k-1

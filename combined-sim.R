@@ -1,19 +1,18 @@
 
+
+source("~/Documents/OneDrive - Texas A&M University/Documents/fair-ML/RCodes/mediation_git/functions_lfdr.R")
+
 source("~/Documents/OneDrive - Texas A&M University/Documents/fair-ML/RCodes/mediation_git/dact.R")
-source("~/Documents/OneDrive - Texas A&M University/Documents/fair-ML/RCodes/mediation_git/EM2v2.R")
+library(DACT)
+library(HDMT)
+library(locfdr)
 
 
 
-n = 100
-m = 1000
-pi = c(0.7, 0.1, 0.1, 0.1)
-tau = 2
-X = rnorm(n, 3, sd = 0.75)
-generate.obj = generate(m,n,pi, tau, X)
-attach(generate.obj)
 
 
-comb.fcn = function(X, M, Y, tp, tn, size)
+
+comb.fcn = function(X, M, Y, tp, tn, size = 0.05)
 {
   m = nrow(Y)
   n = ncol(Y)
@@ -27,7 +26,7 @@ comb.fcn = function(X, M, Y, tp, tn, size)
   }
   input_pvalues = cbind(p1, p2)
   pmax = apply(input_pvalues, 1, max)
-  pval2 = DACT(p1, p2, correction = "JC")
+  pval2 = DACT::DACT(p1, p2, correction = "JC")
   ##null estimation
   
   nullprop = null_estimation(input_pvalues)
@@ -47,5 +46,46 @@ comb.fcn = function(X, M, Y, tp, tn, size)
   alpha = sample2[,1]
   beta = sample2[,2]
   
+  ##call a function here to estimate the value of pi_start using storey's method.
+  ##pi_start = pi.init(p1, p2, lambda)
+  pi_start = c(nullprop$alpha00, nullprop$alpha10, nullprop$alpha01, 1 - (nullprop$alpha00 + nullprop$alpha10 + nullprop$alpha01))
+  obj = maximization(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
+  parm = obj$par
+  obj_rej = lfdr(sample2, parm)
+  rej3 = obj_rej$rej
+  fdr3 = sum(rej3*tn)/max(1,sum(rej3))
+  pow3 = sum(rej3*tp)/sum(tp)
+  
+  return(c(fdr1, fdr2, fdr3, pow1, pow2, pow3))
   
 }
+
+##Dense alternative
+#tau = 1.5
+tau = 2.5
+n = 100
+m = 1000
+pi = c(0.4, 0.2, 0.2, 0.2)
+v = matrix(nrow = 20, ncol = 6)
+for(l in 1:20)
+  {
+  X = rnorm(n, 3, sd = 0.75)
+  generate.obj = generate(m,n,pi, tau, X)
+  M = generate.obj$M
+  Y = generate.obj$Y
+  tp = generate.obj$tp
+  tn = generate.obj$tn
+ 
+ v[l,]=comb.fcn(X, M, Y, tp, tn)
+ print(l)
+}
+means = colMeans(v)
+std = sqrt(apply(v,2, var))
+
+
+means_mat[3,] = means
+sd_mat[3,] = std
+
+write.csv(rbind(means_mat, sd_mat), file = "dense_alt.csv")
+means_mat = matrix(nrow = 3, ncol = 6)
+sd_mat = matrix(nrow = 3, ncol = 6)
