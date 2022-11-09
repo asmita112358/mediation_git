@@ -16,3 +16,4 @@ Clearly, for this setup, the margina lfdrs are unable to provide a distinction b
 6. The estimate of the mFDR and mFNR in the 2d method is incorrect. (For details, check overleaf.)Edit: this has been corrected. There was an issue with 1/m.
 
 7. (11/7) Currently the EM function still has issues with estimating sigma_a and sigma_b. Update: This issue has been fixed.
+8. sparse_alt.csv and dense_alt.csv contains FDR and Power for sparse and dense alternative. Details and graphs in overleaf.
