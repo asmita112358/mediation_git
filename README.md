@@ -17,3 +17,4 @@ Clearly, for this setup, the margina lfdrs are unable to provide a distinction b
 
 7. (11/7) Currently the EM function still has issues with estimating sigma_a and sigma_b. Update: This issue has been fixed.
 8. sparse_alt.csv and dense_alt.csv contains FDR and Power for sparse and dense alternative. Details and graphs in overleaf.
+9. Power and FDR graphs for sparse and dense alternative added.
