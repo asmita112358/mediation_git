@@ -16,7 +16,7 @@ generate = function(m, n, pi, tau, X)
   M = matrix(nrow = m, ncol = n)
   Y = matrix(nrow = m, ncol = n)
   gamma = sample(1:4, m, replace = T, prob = pi)
-  
+  gamma_another = rnorm(m, mean = 1, sd = 0.5)
   alpha = vector()
   beta = vector()
   tn = vector()
@@ -44,7 +44,7 @@ generate = function(m, n, pi, tau, X)
     tn[i] = alpha[i]*beta[i] ==0
     tp[i] = alpha[i]*beta[i] !=0
     M[i,] = alpha[i]*X + rnorm(n)
-    Y[i,] = beta[i]*M[i,] + rnorm(n)
+    Y[i,] = beta[i]*M[i,] + gamma_another[i]*X + rnorm(n)
     
   }
   return(list(M = M, Y = Y, X = X, sample = cbind(alpha, beta) ,tp = tp, tn = tn))
@@ -62,9 +62,9 @@ est.coeff = function(X, Y, M) ##Takes in the original sample, returns alpha and 
   for(i in 1:m)
   {
     obj1 = lm(M[i,] ~ -1 + X)
-    obj2 = lm(Y[i,] ~ -1 + M[i,])
+    obj2 = lm(Y[i,] ~ -1 + M[i,] + X)
     alpha[i] = obj1$coefficients
-    beta[i] = obj2$coefficients
+    beta[i] = obj2$coefficients[1]
   }
   return(cbind(alpha, beta))
 }
@@ -168,8 +168,8 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
   
   ##Define starting values of parameters
   
-  mu_start = mean(tail(sort(alpha),m/10))
-  theta_start = mean(tail(sort(beta),m/10))
+  mu_start = mean(tail(sort(alpha),m/2))
+  theta_start = mean(tail(sort(beta),m/2))
   sigma_a_start = 1.5 #sqrt(var(alpha)*sum(X^2))
   sigma_b_start = 2
   Qval = Q(alpha, beta, X, M, pi_start, sigma_a_start, sigma_b_start, mu_start, theta_start)
@@ -197,7 +197,7 @@ maximization = function(alpha, beta, X, Y, M, pi_start, maxiter = 1000)
   counter = 1
   LL.vec = vector()
   LL.vec[counter] = LL.new
-  while(LL.new - LL.start > 1e-3)
+  while(LL.new - LL.start > 1e-1)
   {
     counter = counter + 1
     ##The new values from the last iteration becomes the starting values

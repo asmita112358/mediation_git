@@ -3,7 +3,7 @@ library(dplyr)
 library(tidyr)
 ##Setup 1: Known, fixed alpha, beta, under dense and sparse slternative
 
-data = read.csv("sparse_alt.csv")
+data = read.csv("dense_alt_2.csv")
 method = c("JS-mixture","DACT","MLFDR")
 tau = c("low", "medium", "high")
 fdr = data[ 1:3, 2:4]
