@@ -18,4 +18,5 @@ Clearly, for this setup, the margina lfdrs are unable to provide a distinction b
 7. (11/7) Currently the EM function still has issues with estimating sigma_a and sigma_b. Update: This issue has been fixed.
 8. sparse_alt.csv and dense_alt.csv contains FDR and Power for sparse and dense alternative. Details and graphs in overleaf.
 9. Power and FDR graphs for sparse and dense alternative added.
-10. Added EM functions for variable alpha. (functions_EM_stoch-alpha.R)
+10. Added EM functions for variable alpha. (semifinal_fun.R)
+11. FOUND A MAJOR BUG IN CODE. AS OF NOW, ONLY semifinal_fun.R IS CORRECT, REST ARE INCORRECT
