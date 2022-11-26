@@ -20,12 +20,14 @@ comb.fcn = function(X, M, Y, tp, tn, size = 0.05)
   p2 = vector()
   for(i in 1:m)
   {
-    p1[i] = cor.test(X, M[i,])$p.value
-    p2[i] = cor.test(M[i,], Y[i,])$p.value
+    obj = lm(X ~ -1 + M[i,])
+    p1[i] = summary(obj)$coefficients[,4]
+    obj2 = lm(Y[i,] ~ -1 + M[i,])
+    p2[i] = summary(obj2)$coefficients[,4]
   }
   input_pvalues = cbind(p1, p2)
   pmax = apply(input_pvalues, 1, max)
-  pval2 = DACT::DACT(p1, p2, correction = "JC")
+  p_dact = DACT::DACT(p1, p2, correction = "NULL")
   ##null estimation
   
   nullprop = null_estimation(input_pvalues)
@@ -36,7 +38,7 @@ comb.fcn = function(X, M, Y, tp, tn, size = 0.05)
   fdr1 = sum(rej1*tn)/max(1,sum(rej1))
   pow1 = sum(rej1*tp)/sum(tp)
   
-  rej2 = pval2 <= size
+  rej2 = p_dact <= size
   fdr2 = sum(rej2*tn)/max(1,sum(rej2))
   pow2 = sum(rej2*tp)/sum(tp)
   
@@ -65,13 +67,13 @@ comb.fcn = function(X, M, Y, tp, tn, size = 0.05)
 means_mat = matrix(nrow = 3, ncol = 6)
 sd_mat = matrix(nrow = 3, ncol = 6)
 #tau = 0.5
-tau = 1.5
+tau = 1
 #tau = 2.5
-n = 100
-m = 1000
-pi = c(0.4, 0.2, 0.2, 0.2)
+n = 250
+m = 5000
+pi = c(0.49, 0.21, 0.21, 0.09)
 kap = 1
-psi = 1
+psi = 2
 v = matrix(nrow = 20, ncol = 6)
 for(l in 1:20)
   {
