@@ -20,3 +20,4 @@ Clearly, for this setup, the margina lfdrs are unable to provide a distinction b
 9. Power and FDR graphs for sparse and dense alternative added.
 10. Added EM functions for variable alpha. (semifinal_fun.R)
 11. FOUND A MAJOR BUG IN CODE. AS OF NOW, ONLY semifinal_fun.R IS CORRECT, REST ARE INCORRECT
+12. (06/20) Update the estimated coefficients and pvalues everytime you change the model in est.coeff, comb.fcn.
